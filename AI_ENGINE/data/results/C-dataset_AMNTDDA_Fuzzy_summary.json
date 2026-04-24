@@ -1,0 +1,19 @@
+{
+  "dataset": "C-dataset",
+  "model": "AMNTDDA_Fuzzy",
+  "n_folds": 10,
+  "AUC_mean": 0.964471,
+  "AUC_std": 0.004514,
+  "AUPR_mean": 0.967012,
+  "AUPR_std": 0.006111,
+  "Accuracy_mean": 0.896923,
+  "Accuracy_std": 0.009211,
+  "Precision_mean": 0.879737,
+  "Precision_std": 0.013856,
+  "Recall_mean": 0.919822,
+  "Recall_std": 0.010076,
+  "F1_mean": 0.899258,
+  "F1_std": 0.008647,
+  "MCC_mean": 0.794817,
+  "MCC_std": 0.018149
+}

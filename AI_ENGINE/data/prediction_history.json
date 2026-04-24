@@ -1,0 +1,292 @@
+[
+  {
+    "id": 1776919255001,
+    "timestamp": "2026-04-23T04:40:55.001Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776919194626,
+    "timestamp": "2026-04-23T04:39:54.626Z",
+    "drug": "Clobazam",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "B-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776919193294,
+    "timestamp": "2026-04-23T04:39:53.294Z",
+    "drug": "Clobazam",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "B-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776917179698,
+    "timestamp": "2026-04-23T04:06:19.698Z",
+    "drug": "Clobazam",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "B-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776916592146,
+    "timestamp": "2026-04-23T03:56:32.146Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776916591557,
+    "timestamp": "2026-04-23T03:56:31.557Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776838534787,
+    "timestamp": "2026-04-22T06:15:34.787Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776838526414,
+    "timestamp": "2026-04-22T06:15:26.414Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776838291050,
+    "timestamp": "2026-04-22T06:11:31.050Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776838277203,
+    "timestamp": "2026-04-22T06:11:17.203Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776838159100,
+    "timestamp": "2026-04-22T06:09:19.100Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832686699,
+    "timestamp": "2026-04-22T04:38:06.699Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832497617,
+    "timestamp": "2026-04-22T04:34:57.617Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832439441,
+    "timestamp": "2026-04-22T04:33:59.441Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832424147,
+    "timestamp": "2026-04-22T04:33:44.147Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832296741,
+    "timestamp": "2026-04-22T04:31:36.741Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832045681,
+    "timestamp": "2026-04-22T04:27:25.681Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776832035590,
+    "timestamp": "2026-04-22T04:27:15.590Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776831927574,
+    "timestamp": "2026-04-22T04:25:27.574Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1776831412037,
+    "timestamp": "2026-04-22T04:16:52.037Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776831410823,
+    "timestamp": "2026-04-22T04:16:50.823Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776831377499,
+    "timestamp": "2026-04-22T04:16:17.499Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776831377186,
+    "timestamp": "2026-04-22T04:16:17.186Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776831372784,
+    "timestamp": "2026-04-22T04:16:12.784Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776831371485,
+    "timestamp": "2026-04-22T04:16:11.485Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776797903287,
+    "timestamp": "2026-04-21T18:58:23.287Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776797903033,
+    "timestamp": "2026-04-21T18:58:23.033Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776797902411,
+    "timestamp": "2026-04-21T18:58:22.411Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  },
+  {
+    "id": 1776797900736,
+    "timestamp": "2026-04-21T18:58:20.736Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 0
+  }
+]
