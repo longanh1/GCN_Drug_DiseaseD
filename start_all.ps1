@@ -5,6 +5,10 @@ $root      = $PSScriptRoot
 $python    = "$root\.venv\Scripts\python.exe"
 $streamlit = "$root\.venv\Scripts\streamlit.exe"
 
+# Force UTF-8 output on Windows (prevents UnicodeEncodeError for Vietnamese text)
+$env:PYTHONIOENCODING = "utf-8"
+$env:PYTHONUTF8       = "1"
+
 Write-Host "=== PharmaLink_GCN Platform ===" -ForegroundColor Cyan
 
 # 1) AI_ENGINE FastAPI (port 8000)

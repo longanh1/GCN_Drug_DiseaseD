@@ -1,5 +1,25 @@
 [
   {
+    "id": 1777040404568,
+    "timestamp": "2026-04-24T14:20:04.568Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA_Fuzzy",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
+    "id": 1777039555464,
+    "timestamp": "2026-04-24T14:05:55.464Z",
+    "drug": "Goserelin",
+    "direction": "Thuốc → Bệnh",
+    "model": "AMNTDDA",
+    "top_k": 10,
+    "dataset": "C-dataset",
+    "num_results": 10
+  },
+  {
     "id": 1776919255001,
     "timestamp": "2026-04-23T04:40:55.001Z",
     "drug": "Goserelin",

@@ -124,3 +124,30 @@ def clear_history() -> dict:
         return r.json()
     except Exception as e:
         return {"error": str(e)}
+
+
+# ── Stage results (Run_Base) — calls AI_ENGINE directly ──────────────
+def list_stages(dataset: str = "B-dataset") -> dict:
+    return _get(f"{_AI}/stages/list", {"dataset": dataset}) or {}
+
+def get_stage_result(stage: str, dataset: str = "B-dataset") -> dict:
+    return _get(f"{_AI}/stages/result", {"stage": stage, "dataset": dataset}) or {}
+
+def get_all_models_results(dataset: str = "C-dataset") -> dict:
+    return _get(f"{_AI}/results/all_models", {"dataset": dataset}) or {}
+
+def get_training_results_ai(dataset: str = "C-dataset",
+                             model: str = "AMNTDDA_Fuzzy") -> dict:
+    return _get(f"{_AI}/results/training", {"dataset": dataset, "model": model}) or {}
+
+def get_drug_network(drug_idx: int, dataset: str = "C-dataset") -> dict:
+    return _get(f"{_AI}/network/drug/{drug_idx}", {"dataset": dataset}) or {}
+
+def get_drug_disease_interaction(drug_idx: int, disease_idx: int,
+                                  dataset: str = "C-dataset") -> dict:
+    return _get(f"{_AI}/network/drug-disease",
+                {"drug_idx": drug_idx, "disease_idx": disease_idx, "dataset": dataset}) or {}
+
+def classify_batch(dataset: str, entity: str = "drug", limit: int = 50) -> dict:
+    return _get(f"{_AI}/classify/batch",
+                {"dataset": dataset, "entity": entity, "limit": limit}) or {}

@@ -22,6 +22,7 @@ pg = st.navigation(
         st.Page("home.py",               title="Trang chu",        icon="🏠", default=True),
         st.Page("pages/1_prediction.py", title="Du doan & Phan tich", icon="🔬"),
         st.Page("pages/2_history.py",    title="Lich su",           icon="📋"),
+        st.Page("pages/3_model_stages.py", title="Cac giai doan mo hinh goc", icon="🧬"),
     ],
     position="hidden",
 )
