@@ -1,0 +1,11 @@
+{
+  "pythonVersion": "3.9",
+  "extraPaths": [
+    "AI_ENGINE/src",
+    "AI_ENGINE/model",
+    "AI_ENGINE",
+    "AMDGT_main"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none"
+}

@@ -1,0 +1,341 @@
+{
+  "stage": "stage4_prediction",
+  "dataset": "C-dataset",
+  "timestamp": "2026-04-28 21:28:43",
+  "elapsed_sec": 48.03,
+  "fold_evaluated": 0,
+  "epochs_run": 10,
+  "best_metrics": {
+    "AUC": 0.8104,
+    "AUPR": 0.80382,
+    "Accuracy": 0.74359,
+    "Precision": 0.75833,
+    "Recall": 0.71654,
+    "F1": 0.73684,
+    "MCC": 0.48798
+  },
+  "epoch_log": [
+    {
+      "epoch": 1,
+      "loss": 0.696708,
+      "AUC": 0.8015,
+      "AUPR": 0.78154
+    },
+    {
+      "epoch": 2,
+      "loss": 0.684641,
+      "AUC": 0.80096,
+      "AUPR": 0.78811
+    },
+    {
+      "epoch": 3,
+      "loss": 0.675764,
+      "AUC": 0.80047,
+      "AUPR": 0.78896
+    },
+    {
+      "epoch": 4,
+      "loss": 0.663771,
+      "AUC": 0.80002,
+      "AUPR": 0.79263
+    },
+    {
+      "epoch": 5,
+      "loss": 0.644729,
+      "AUC": 0.79899,
+      "AUPR": 0.79094
+    },
+    {
+      "epoch": 6,
+      "loss": 0.621973,
+      "AUC": 0.80021,
+      "AUPR": 0.79081
+    },
+    {
+      "epoch": 7,
+      "loss": 0.59928,
+      "AUC": 0.80192,
+      "AUPR": 0.79359
+    },
+    {
+      "epoch": 8,
+      "loss": 0.576712,
+      "AUC": 0.80307,
+      "AUPR": 0.79504
+    },
+    {
+      "epoch": 9,
+      "loss": 0.552724,
+      "AUC": 0.80573,
+      "AUPR": 0.80115
+    },
+    {
+      "epoch": 10,
+      "loss": 0.538123,
+      "AUC": 0.8104,
+      "AUPR": 0.80382
+    }
+  ],
+  "top_predictions": [
+    {
+      "drug_idx": 275,
+      "disease_idx": 316,
+      "prob": 0.9106,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 461,
+      "disease_idx": 99,
+      "prob": 0.91,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 383,
+      "disease_idx": 359,
+      "prob": 0.9065,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 241,
+      "disease_idx": 24,
+      "prob": 0.9026,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 109,
+      "disease_idx": 392,
+      "prob": 0.8989,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 245,
+      "disease_idx": 405,
+      "prob": 0.8948,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 578,
+      "disease_idx": 183,
+      "prob": 0.8934,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 343,
+      "disease_idx": 371,
+      "prob": 0.8933,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 333,
+      "disease_idx": 99,
+      "prob": 0.8905,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 312,
+      "disease_idx": 99,
+      "prob": 0.8902,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 247,
+      "disease_idx": 99,
+      "prob": 0.8894,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 136,
+      "disease_idx": 124,
+      "prob": 0.8875,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 395,
+      "disease_idx": 359,
+      "prob": 0.887,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 395,
+      "disease_idx": 362,
+      "prob": 0.8865,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 521,
+      "disease_idx": 362,
+      "prob": 0.8857,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 402,
+      "disease_idx": 196,
+      "prob": 0.8852,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 293,
+      "disease_idx": 362,
+      "prob": 0.8852,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 453,
+      "disease_idx": 19,
+      "prob": 0.885,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 658,
+      "disease_idx": 359,
+      "prob": 0.8827,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 326,
+      "disease_idx": 149,
+      "prob": 0.8827,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 141,
+      "disease_idx": 405,
+      "prob": 0.8816,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 367,
+      "disease_idx": 392,
+      "prob": 0.8816,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 418,
+      "disease_idx": 358,
+      "prob": 0.8814,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 598,
+      "disease_idx": 280,
+      "prob": 0.8781,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 551,
+      "disease_idx": 344,
+      "prob": 0.8767,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 150,
+      "disease_idx": 322,
+      "prob": 0.8767,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 36,
+      "disease_idx": 392,
+      "prob": 0.8728,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 346,
+      "disease_idx": 347,
+      "prob": 0.8719,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 624,
+      "disease_idx": 316,
+      "prob": 0.8719,
+      "label": 1,
+      "pred": 1
+    },
+    {
+      "drug_idx": 572,
+      "disease_idx": 124,
+      "prob": 0.8711,
+      "label": 1,
+      "pred": 1
+    }
+  ],
+  "learning_curve": {
+    "epochs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "auc": [
+      0.8015,
+      0.80096,
+      0.80047,
+      0.80002,
+      0.79899,
+      0.80021,
+      0.80192,
+      0.80307,
+      0.80573,
+      0.8104
+    ],
+    "aupr": [
+      0.78154,
+      0.78811,
+      0.78896,
+      0.79263,
+      0.79094,
+      0.79081,
+      0.79359,
+      0.79504,
+      0.80115,
+      0.80382
+    ],
+    "loss": [
+      0.696708,
+      0.684641,
+      0.675764,
+      0.663771,
+      0.644729,
+      0.621973,
+      0.59928,
+      0.576712,
+      0.552724,
+      0.538123
+    ]
+  }
+}

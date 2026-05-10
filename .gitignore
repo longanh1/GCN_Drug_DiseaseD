@@ -1,0 +1,16 @@
+﻿.venv/
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.*
+dist/
+build/
+
+# Large model files
+*.pt
+*.pth
+*.pkl
+*.h5
+*.ckpt
