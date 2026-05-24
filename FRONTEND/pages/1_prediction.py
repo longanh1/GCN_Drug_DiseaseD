@@ -32,7 +32,14 @@ from utils.chart_utils import (
     membership_chart, bar_chart_comparison,
     heatmap, radar_chart, score_bar,
 )
-from utils.molecule_utils import smiles_to_image_b64, get_mol_properties, smiles_to_3d_plotly
+from utils.molecule_utils import (
+    smiles_to_image_b64, get_mol_properties, smiles_to_3d_plotly,
+    smiles_to_2d_plotly, get_lipinski_analysis,
+)
+from utils.auth import (
+    is_authenticated, can_do, get_current_user,
+    render_user_sidebar, render_profile_modal,
+)
 
 # ── CSS ────────────────────────────────────────────────────────────────────
 st.markdown('<base href="/">', unsafe_allow_html=True)
@@ -348,7 +355,9 @@ with st.sidebar:
     if st.button("🏠  Trang chủ",             use_container_width=True): st.switch_page("home.py")
     if st.button("🔬  Dự đoán & Phân tích",   use_container_width=True): st.switch_page("pages/1_prediction.py")
     if st.button("📋  Lịch sử",               use_container_width=True): st.switch_page("pages/2_history.py")
-    if st.button("🔬  Giai đoạn mô hình gốc", use_container_width=True): st.switch_page("pages/3_model_stages.py")
+    if st.button("🧬  Giai đoạn mô hình gốc", use_container_width=True): st.switch_page("pages/3_model_stages.py")
+    if st.button("📊  Ablation Study",         use_container_width=True): st.switch_page("pages/4_ablation.py")
+    if st.button("🧪  Sinh thuốc mới (VGAE)",  use_container_width=True): st.switch_page("pages/5_drug_generation.py")
     st.markdown('<div class="sb-nav-label">Cấu hình</div>', unsafe_allow_html=True)
     datasets = get_datasets()
     if datasets:
@@ -446,47 +455,101 @@ with tab1:
             if drug_data and drug_data.get("smiles"):
                 st.markdown("<br>", unsafe_allow_html=True)
                 st.markdown('<div class="panel-title">⚗️ Cấu trúc phân tử</div>', unsafe_allow_html=True)
-                _mol_mode = st.radio("Chế độ xem", ["🖼️ 2D", "🔮 3D"],
+                _mol_mode = st.radio("Chế độ xem", ["🖼️ 2D (SVG)", "📊 2D (Interactive)", "🔮 3D"],
                                      horizontal=True, key="mol_view_mode",
                                      label_visibility="collapsed")
                 smiles_str = drug_data["smiles"]
-                if "2D" in _mol_mode:
-                    img_b64 = smiles_to_image_b64(smiles_str, (320, 220))
-                    if img_b64:
+                mol_name   = drug_data.get("name", "Phân tử")
+
+                if "SVG" in _mol_mode:
+                    from utils.molecule_utils import smiles_to_svg
+                    svg = smiles_to_svg(smiles_str, size=(440, 300), dark_bg=True)
+                    if svg:
                         st.markdown(f"""
-                        <div class="mol-box" style="cursor:zoom-in;">
-                            <img src="data:image/png;base64,{img_b64}"
-                                 style="width:100%;display:block;" />
+                        <div class="mol-box" style="background:rgba(10,14,36,0.95);
+                             border-radius:12px;padding:8px;border:1px solid rgba(99,102,241,0.2);">
+                            {svg}
                         </div>""", unsafe_allow_html=True)
-                        # Full-size expandable via plotly image
-                        with st.expander("🔍 Phóng to 2D"):
-                            img_b64_lg = smiles_to_image_b64(smiles_str, (700, 500))
-                            if img_b64_lg:
-                                st.markdown(f'<img src="data:image/png;base64,{img_b64_lg}" style="width:100%;border-radius:8px;" />', unsafe_allow_html=True)
-                else:
-                    fig_3d = smiles_to_3d_plotly(smiles_str, title=drug_data.get("name","Phân tử"))
+                    else:
+                        img_b64 = smiles_to_image_b64(smiles_str, (440, 300))
+                        if img_b64:
+                            st.markdown(f'<img src="data:image/png;base64,{img_b64}" style="width:100%;border-radius:10px;" />', unsafe_allow_html=True)
+
+                elif "Interactive" in _mol_mode:
+                    fig_2d = smiles_to_2d_plotly(smiles_str, title=mol_name, dark=True)
+                    if fig_2d:
+                        st.plotly_chart(fig_2d, use_container_width=True,
+                                        config={"displayModeBar": True,
+                                                "modeBarButtonsToAdd": ["zoomIn2d","zoomOut2d","resetScale2d"],
+                                                "scrollZoom": True,
+                                                "toImageButtonOptions": {"format":"png","width":800,"height":600}})
+                    else:
+                        st.caption("⚠️ Cần cài RDKit để hiển thị 2D interactive")
+
+                else:  # 3D
+                    fig_3d = smiles_to_3d_plotly(smiles_str, title=mol_name, dark=True)
                     if fig_3d:
                         st.plotly_chart(fig_3d, use_container_width=True,
                                         config={"displayModeBar": True,
                                                 "modeBarButtonsToAdd": ["zoomIn3d","zoomOut3d","resetCameraDefault3d"],
-                                                "scrollZoom": True})
+                                                "scrollZoom": True,
+                                                "toImageButtonOptions": {"format":"png","width":900,"height":700}})
                     else:
                         st.caption("⚠️ Không thể tạo cấu trúc 3D (cần RDKit AllChem)")
+
+                # ── Molecular properties ──────────────────────────────
                 props = get_mol_properties(smiles_str)
                 if props:
-                    pc1, pc2 = st.columns(2)
-                    with pc1:
+                    st.markdown('<div class="panel-title" style="margin-top:12px;">📐 Thuộc tính phân tử</div>', unsafe_allow_html=True)
+                    prop_items = [
+                        ("⚛️", props.get("num_atoms","?"),       "Nguyên tử"),
+                        ("🔗", props.get("num_bonds","?"),       "Liên kết"),
+                        ("⚖️", f'{props.get("mol_weight","?")} Da', "Khối lượng"),
+                        ("💧", props.get("logp","?"),            "LogP"),
+                        ("🔄", props.get("num_rings","?"),       "Vòng"),
+                        ("📊", props.get("qed","?"),             "QED"),
+                    ]
+                    p_cols = st.columns(3)
+                    for idx, (icon, val, lbl) in enumerate(prop_items):
+                        with p_cols[idx % 3]:
+                            st.markdown(f"""
+                            <div class="mol-prop">
+                                <div style="font-size:1rem;">{icon}</div>
+                                <div class="mol-prop-val">{val}</div>
+                                <div class="mol-prop-lbl">{lbl}</div>
+                            </div>""", unsafe_allow_html=True)
+
+                # ── Lipinski Rule-of-5 ────────────────────────────────
+                lipo = get_lipinski_analysis(smiles_str)
+                if lipo:
+                    passed = lipo.get("passed", 0)
+                    total  = lipo.get("total", 6)
+                    drug_like = lipo.get("drug_like", False)
+                    color  = "#4ade80" if drug_like else "#fb923c"
+                    badge  = "✅ Drug-like" if drug_like else "⚠️ Non drug-like"
+                    st.markdown(f"""
+                    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);
+                                border-radius:12px;padding:12px 16px;margin-top:10px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                            <span style="color:#818cf8;font-size:0.82rem;font-weight:600;">
+                                🧪 Lipinski Ro5 &nbsp;·&nbsp; {passed}/{total} quy tắc đạt
+                            </span>
+                            <span style="color:{color};font-size:0.78rem;font-weight:700;">{badge}</span>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    """, unsafe_allow_html=True)
+                    for rule_name, ok in lipo.get("rules", {}).items():
+                        rc = "rgba(74,222,128,0.15)" if ok else "rgba(251,146,60,0.12)"
+                        bc = "rgba(74,222,128,0.4)"  if ok else "rgba(251,146,60,0.35)"
+                        tc = "#4ade80" if ok else "#fb923c"
+                        ic = "✓" if ok else "✗"
                         st.markdown(f"""
-                        <div class="mol-prop">
-                            <div class="mol-prop-val">{props.get("num_atoms","?")}</div>
-                            <div class="mol-prop-lbl">Nguyên tử</div>
-                        </div>""", unsafe_allow_html=True)
-                    with pc2:
-                        st.markdown(f"""
-                        <div class="mol-prop">
-                            <div class="mol-prop-val">{props.get("mol_weight","?")} Da</div>
-                            <div class="mol-prop-lbl">Khối lượng mol</div>
-                        </div>""", unsafe_allow_html=True)
+                            <span style="background:{rc};border:1px solid {bc};color:{tc};
+                                         border-radius:6px;padding:3px 9px;font-size:0.73rem;font-weight:600;">
+                                {ic} {rule_name}
+                            </span>""", unsafe_allow_html=True)
+                    st.markdown("</div></div>", unsafe_allow_html=True)
+
                 st.markdown(f"""
                 <div class="smiles-code" title="SMILES">{smiles_str[:80]}{'...' if len(smiles_str)>80 else ''}</div>
                 """, unsafe_allow_html=True)
@@ -543,7 +606,14 @@ with tab1:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        if st.button("▶  Chạy dự đoán AI", use_container_width=True, type="primary",
+        # ── RBAC: Viewer không thể chạy dự đoán ───────────────────────
+        if not can_do("run_prediction"):
+            st.markdown("""
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                        border-radius:12px;padding:14px 18px;text-align:center;">
+                🔒 <strong>Tài khoản Viewer</strong> — Chỉ xem kết quả có sẵn, không thể chạy dự đoán mới.
+            </div>""", unsafe_allow_html=True)
+        elif st.button("▶  Chạy dự đoán AI", use_container_width=True, type="primary",
                      key="run_predict_btn"):
             drug_d = st.session_state.selected_drug
             if not drug_d and is_drug:
@@ -1529,8 +1599,13 @@ with tab4:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        run_btn = st.button("▶  Chạy VGAE", type="primary", key="gen_btn",
-                            use_container_width=True)
+        run_btn = can_do("generate_molecule") and st.button(
+            "▶  Chạy VGAE", type="primary", key="gen_btn", use_container_width=True)
+        if not can_do("generate_molecule"):
+            st.markdown("""<div style="background:rgba(239,68,68,0.08);border:1px solid
+            rgba(239,68,68,0.25);border-radius:10px;padding:10px 14px;text-align:center;
+            font-size:0.82rem;">🔒 Tài khoản <b>Viewer</b> không thể chạy VGAE</div>""",
+            unsafe_allow_html=True)
 
         # ── Nút xem kết quả đã có sẵn (không cần train lại) ──
         load_btn = st.button("📂  Xem kết quả cũ", key="load_vgae_btn",

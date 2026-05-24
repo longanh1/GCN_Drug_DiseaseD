@@ -37,7 +37,22 @@ def get_vgae_results(dataset: str) -> dict:
     return _get(f"{AI}/vgae/results", {"dataset": dataset}, timeout=15) or {}
 
 # ── Layout ────────────────────────────────────────────────────────────
-st.set_page_config(page_title="Sinh Thuốc Mới – VGAE", layout="wide")
+
+# ── Sidebar ──────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("""
+    <div style="padding:20px 16px 14px;border-bottom:1px solid rgba(99,102,241,0.2);margin-bottom:8px">
+        <div style="font-size:1rem;font-weight:700;color:#818cf8">🧬 PharmaLink GCN</div>
+        <div style="font-size:0.72rem;color:#475569">Drug-Disease AI Platform v2.0</div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('<div style="font-size:0.68rem;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.08em;padding:12px 4px 6px">Điều hướng</div>', unsafe_allow_html=True)
+    if st.button("🏠  Trang chủ",              use_container_width=True): st.switch_page("home.py")
+    if st.button("🔬  Dự đoán & Phân tích",    use_container_width=True): st.switch_page("pages/1_prediction.py")
+    if st.button("📋  Lịch sử",               use_container_width=True): st.switch_page("pages/2_history.py")
+    if st.button("🧬  Giai đoạn mô hình gốc",  use_container_width=True): st.switch_page("pages/3_model_stages.py")
+    if st.button("📊  Ablation Study",          use_container_width=True): st.switch_page("pages/4_ablation.py")
+    if st.button("🧪  Sinh thuốc mới (VGAE)",   use_container_width=True): st.switch_page("pages/5_drug_generation.py")
 
 st.markdown("""
 <h1 style='text-align:center;margin-bottom:4px'>
@@ -167,72 +182,308 @@ with tab_table:
 
 # ── Network graph ─────────────────────────────────────────────────────
 with tab_graph:
-    st.markdown("### 🕸️ Mạng lưới liên kết mới")
+    st.markdown("### 🕸️ Mạng lưới liên kết thuốc–protein")
 
-    drug_nodes  = df["drug_name"].unique().tolist()
-    prot_nodes  = df["prot_name"].unique().tolist()
-    all_nodes   = drug_nodes + prot_nodes
-    n_total     = len(all_nodes)
-    node_idx    = {name: i for i, name in enumerate(all_nodes)}
-
-    # Layout: drugs on left, proteins on right
-    n_d = len(drug_nodes)
-    n_p = len(prot_nodes)
-    x_pos = [0.0] * n_d + [1.0] * n_p
-    y_d   = np.linspace(0, 1, max(n_d, 1))
-    y_p   = np.linspace(0, 1, max(n_p, 1))
-    y_pos = list(y_d) + list(y_p)
-
-    # Colors
-    colors = ["#3B82F6"] * n_d + ["#10B981"] * n_p
-
-    edge_x, edge_y = [], []
-    for _, row in df.iterrows():
-        xi = x_pos[node_idx[row["drug_name"]]]
-        xj = x_pos[node_idx[row["prot_name"]]]
-        yi = y_pos[node_idx[row["drug_name"]]]
-        yj = y_pos[node_idx[row["prot_name"]]]
-        edge_x += [xi, xj, None]
-        edge_y += [yi, yj, None]
-
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=edge_x, y=edge_y,
-        mode="lines",
-        line=dict(color="#6B7280", width=0.8),
-        hoverinfo="none",
-        name="Liên kết mới",
-    ))
-    fig.add_trace(go.Scatter(
-        x=x_pos, y=y_pos,
-        mode="markers+text",
-        marker=dict(size=10, color=colors, line=dict(width=1, color="white")),
-        text=all_nodes,
-        textposition="middle right",
-        textfont=dict(size=9),
-        hovertext=all_nodes,
-        hoverinfo="text",
-        name="Nodes",
-    ))
-    fig.update_layout(
-        height=500,
-        showlegend=False,
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
-                   tickvals=[0, 1], ticktext=["💊 Thuốc", "🔬 Protein"]),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        plot_bgcolor="#0F172A",
-        paper_bgcolor="#0F172A",
-        font=dict(color="white"),
-        margin=dict(l=20, r=20, t=40, b=20),
-        title=dict(text="Liên kết Thuốc–Protein Mới (màu xanh=thuốc, màu lục=protein)",
-                   font=dict(size=13, color="#94A3B8")),
+    # ── Controls ──────────────────────────────────────────────────────
+    _g_ctrl1, _g_ctrl2, _g_ctrl3 = st.columns([3, 1, 1])
+    _max_per = max(len(df["drug_name"].unique()), len(df["prot_name"].unique()))
+    _top_n   = _g_ctrl1.slider(
+        "Số nút mỗi nhóm (top theo số liên kết)",
+        min_value=5, max_value=min(50, _max_per),
+        value=min(15, _max_per), step=5, key="g_topn",
     )
-    # Annotation labels
-    fig.add_annotation(x=0, y=1.05, text="💊 Thuốc", showarrow=False,
-                       font=dict(color="#3B82F6", size=13), xref="x", yref="y")
-    fig.add_annotation(x=1, y=1.05, text="🔬 Protein", showarrow=False,
-                       font=dict(color="#10B981", size=13), xref="x", yref="y")
-    st.plotly_chart(fig, use_container_width=True)
+    _view3d   = _g_ctrl2.toggle("🌐 3D", value=False, key="g_3d")
+    _show_lbl = _g_ctrl3.checkbox("Nhãn", value=False, key="g_lbl")
+
+    # ── Filter to top-N most connected per group ───────────────────────
+    _top_drugs = df["drug_name"].value_counts().head(_top_n).index.tolist()
+    _top_prots = df["prot_name"].value_counts().head(_top_n).index.tolist()
+    _df_g = df[df["drug_name"].isin(_top_drugs) & df["prot_name"].isin(_top_prots)]
+
+    if _df_g.empty:
+        st.info("Không có liên kết nào sau khi lọc.")
+    else:
+        _n_d = len(_top_drugs)
+        _n_p = len(_top_prots)
+        _drug_deg = _df_g["drug_name"].value_counts().to_dict()
+        _prot_deg = _df_g["prot_name"].value_counts().to_dict()
+        _max_deg  = max(max(_drug_deg.values(), default=1),
+                        max(_prot_deg.values(), default=1))
+
+        def _norm_deg(v):
+            return v / _max_deg if _max_deg else 0
+
+        if not _view3d:
+            # ═══════════════════════════════════════════════════════════
+            # 2D — Chord diagram: nodes on a circle arc, bezier edges
+            # ═══════════════════════════════════════════════════════════
+            _R2  = 2.5
+            # Drugs: left arc 100°→260°, Proteins: right arc -80°→80°
+            _d_a = np.linspace(np.radians(100), np.radians(260), _n_d)
+            _p_a = np.linspace(np.radians(-80),  np.radians(80),  _n_p)
+            _dpos = {
+                n: (float(_R2 * np.cos(_d_a[i])), float(_R2 * np.sin(_d_a[i])))
+                for i, n in enumerate(_top_drugs)
+            }
+            _ppos = {
+                n: (float(_R2 * np.cos(_p_a[i])), float(_R2 * np.sin(_p_a[i])))
+                for i, n in enumerate(_top_prots)
+            }
+
+            # Cubic bezier — control points pulled to center for chord effect
+            def _bz(x0, y0, x1, y1, ns=12):
+                cp = 0.15
+                cx0, cy0 = x0 * cp, y0 * cp
+                cx1, cy1 = x1 * cp, y1 * cp
+                t = np.linspace(0, 1, ns)
+                bx = (1-t)**3*x0 + 3*(1-t)**2*t*cx0 + 3*(1-t)*t**2*cx1 + t**3*x1
+                by = (1-t)**3*y0 + 3*(1-t)**2*t*cy0 + 3*(1-t)*t**2*cy1 + t**3*y1
+                return list(bx) + [None], list(by) + [None]
+
+            _ex, _ey = [], []
+            for _, _r in _df_g.iterrows():
+                _bx, _by = _bz(*_dpos[_r["drug_name"]], *_ppos[_r["prot_name"]])
+                _ex += _bx
+                _ey += _by
+
+            _fig2d = go.Figure()
+
+            # Edges
+            _fig2d.add_trace(go.Scatter(
+                x=_ex, y=_ey, mode="lines",
+                line=dict(color="rgba(99,102,241,0.10)", width=1.1),
+                hoverinfo="none", showlegend=False,
+            ))
+
+            # Drug nodes — glow + solid
+            _dx2  = [_dpos[n][0] for n in _top_drugs]
+            _dy2  = [_dpos[n][1] for n in _top_drugs]
+            _dsz  = [12 + int(22 * _norm_deg(_drug_deg.get(n, 1))) for n in _top_drugs]
+            _dc   = [_drug_deg.get(n, 1) for n in _top_drugs]
+            _dhov = [f"<b>💊 {n}</b><br>Liên kết: {_drug_deg.get(n, 0)}" for n in _top_drugs]
+
+            _fig2d.add_trace(go.Scatter(   # glow halo
+                x=_dx2, y=_dy2, mode="markers",
+                marker=dict(size=[s * 2.8 for s in _dsz],
+                            color="rgba(99,102,241,0.07)"),
+                hoverinfo="none", showlegend=False,
+            ))
+            _fig2d.add_trace(go.Scatter(   # solid node
+                x=_dx2, y=_dy2,
+                mode="markers+text" if _show_lbl else "markers",
+                name="💊 Thuốc",
+                marker=dict(
+                    size=_dsz, color=_dc,
+                    colorscale=[[0, "#312e81"], [0.5, "#6366f1"], [1, "#c7d2fe"]],
+                    cmin=0, cmax=_max_deg,
+                    line=dict(width=1.5, color="rgba(255,255,255,0.35)"),
+                    symbol="circle",
+                ),
+                text=_top_drugs if _show_lbl else [""] * _n_d,
+                textposition="middle left",
+                textfont=dict(size=8, color="#c7d2fe"),
+                hovertext=_dhov, hoverinfo="text",
+            ))
+
+            # Protein nodes — glow + solid
+            _px2  = [_ppos[n][0] for n in _top_prots]
+            _py2  = [_ppos[n][1] for n in _top_prots]
+            _psz  = [12 + int(22 * _norm_deg(_prot_deg.get(n, 1))) for n in _top_prots]
+            _pc   = [_prot_deg.get(n, 1) for n in _top_prots]
+            _phov = [f"<b>🔬 {n}</b><br>Liên kết: {_prot_deg.get(n, 0)}" for n in _top_prots]
+
+            _fig2d.add_trace(go.Scatter(   # glow halo
+                x=_px2, y=_py2, mode="markers",
+                marker=dict(size=[s * 2.8 for s in _psz],
+                            color="rgba(16,185,129,0.07)"),
+                hoverinfo="none", showlegend=False,
+            ))
+            _fig2d.add_trace(go.Scatter(   # solid node
+                x=_px2, y=_py2,
+                mode="markers+text" if _show_lbl else "markers",
+                name="🔬 Protein",
+                marker=dict(
+                    size=_psz, color=_pc,
+                    colorscale=[[0, "#064e3b"], [0.5, "#10b981"], [1, "#a7f3d0"]],
+                    cmin=0, cmax=_max_deg,
+                    line=dict(width=1.5, color="rgba(255,255,255,0.35)"),
+                    symbol="diamond",
+                ),
+                text=_top_prots if _show_lbl else [""] * _n_p,
+                textposition="middle right",
+                textfont=dict(size=8, color="#a7f3d0"),
+                hovertext=_phov, hoverinfo="text",
+            ))
+
+            _fig2d.update_layout(
+                height=640,
+                plot_bgcolor="#070c1a",
+                paper_bgcolor="#070c1a",
+                font=dict(color="#e2e8f0"),
+                margin=dict(l=20, r=20, t=55, b=20),
+                title=dict(
+                    text=(f"Bố cục cung tròn — {len(_df_g)} liên kết  ·  "
+                          f"{_n_d} thuốc ●  ·  {_n_p} protein ◆  "
+                          f"— kích thước nút ~ số kết nối"),
+                    font=dict(size=12, color="#475569"), x=0.5,
+                ),
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                           range=[-3.4, 3.4]),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False,
+                           range=[-3.1, 3.1], scaleanchor="x", scaleratio=1),
+                legend=dict(
+                    orientation="h", yanchor="bottom", y=1.01,
+                    xanchor="center", x=0.5,
+                    font=dict(size=11),
+                    bgcolor="rgba(7,12,26,0.85)",
+                    bordercolor="rgba(99,102,241,0.2)", borderwidth=1,
+                ),
+                hovermode="closest",
+            )
+            _fig2d.add_annotation(
+                x=0.03, y=0.97, xref="paper", yref="paper",
+                text="💊 Thuốc", showarrow=False,
+                font=dict(color="#a5b4fc", size=12),
+                bgcolor="rgba(49,46,129,0.5)",
+                bordercolor="#4f46e5", borderwidth=1, borderpad=5,
+            )
+            _fig2d.add_annotation(
+                x=0.97, y=0.97, xref="paper", yref="paper",
+                text="🔬 Protein", showarrow=False,
+                font=dict(color="#6ee7b7", size=12),
+                bgcolor="rgba(6,78,59,0.5)",
+                bordercolor="#059669", borderwidth=1, borderpad=5,
+            )
+            st.plotly_chart(_fig2d, use_container_width=True)
+
+        else:
+            # ═══════════════════════════════════════════════════════════
+            # 3D — Two-ring layout: drugs circle z=0, proteins circle z=4
+            # ═══════════════════════════════════════════════════════════
+            _r3   = 4.0
+            _d3a  = np.linspace(0, 2 * np.pi, _n_d, endpoint=False)
+            _p3a  = np.linspace(np.pi / max(1, _n_p),
+                                 2 * np.pi + np.pi / max(1, _n_p),
+                                 _n_p, endpoint=False)
+            _dpos3 = {
+                n: (float(_r3 * np.cos(_d3a[i])),
+                    float(_r3 * np.sin(_d3a[i])), 0.0)
+                for i, n in enumerate(_top_drugs)
+            }
+            _ppos3 = {
+                n: (float(_r3 * np.cos(_p3a[i])),
+                    float(_r3 * np.sin(_p3a[i])), 4.5)
+                for i, n in enumerate(_top_prots)
+            }
+
+            _ex3, _ey3, _ez3 = [], [], []
+            for _, _r in _df_g.iterrows():
+                dx, dy, dz = _dpos3[_r["drug_name"]]
+                px, py, pz = _ppos3[_r["prot_name"]]
+                _ex3 += [dx, px, None]
+                _ey3 += [dy, py, None]
+                _ez3 += [dz, pz, None]
+
+            _fig3d = go.Figure()
+
+            # Edges 3D
+            _fig3d.add_trace(go.Scatter3d(
+                x=_ex3, y=_ey3, z=_ez3, mode="lines",
+                line=dict(color="rgba(148,163,184,0.13)", width=1),
+                hoverinfo="none", showlegend=False,
+            ))
+
+            # Drug nodes 3D
+            _d3x  = [_dpos3[n][0] for n in _top_drugs]
+            _d3y  = [_dpos3[n][1] for n in _top_drugs]
+            _d3z  = [_dpos3[n][2] for n in _top_drugs]
+            _d3sz = [6 + int(10 * _norm_deg(_drug_deg.get(n, 1))) for n in _top_drugs]
+            _d3c  = [_drug_deg.get(n, 1) for n in _top_drugs]
+
+            _fig3d.add_trace(go.Scatter3d(
+                x=_d3x, y=_d3y, z=_d3z,
+                mode="markers+text" if _show_lbl else "markers",
+                name="💊 Thuốc",
+                marker=dict(
+                    size=_d3sz, color=_d3c,
+                    colorscale=[[0, "#312e81"], [0.5, "#6366f1"], [1, "#c7d2fe"]],
+                    cmin=0, cmax=_max_deg,
+                    line=dict(width=0.5, color="rgba(255,255,255,0.3)"),
+                    opacity=0.92,
+                ),
+                text=_top_drugs if _show_lbl else [""] * _n_d,
+                textfont=dict(size=7, color="#c7d2fe"),
+                hovertext=[f"<b>💊 {n}</b><br>Liên kết: {_drug_deg.get(n, 0)}"
+                           for n in _top_drugs],
+                hoverinfo="text",
+            ))
+
+            # Protein nodes 3D
+            _p3x  = [_ppos3[n][0] for n in _top_prots]
+            _p3y  = [_ppos3[n][1] for n in _top_prots]
+            _p3z  = [_ppos3[n][2] for n in _top_prots]
+            _p3sz = [6 + int(10 * _norm_deg(_prot_deg.get(n, 1))) for n in _top_prots]
+            _p3c  = [_prot_deg.get(n, 1) for n in _top_prots]
+
+            _fig3d.add_trace(go.Scatter3d(
+                x=_p3x, y=_p3y, z=_p3z,
+                mode="markers+text" if _show_lbl else "markers",
+                name="🔬 Protein",
+                marker=dict(
+                    size=_p3sz, color=_p3c,
+                    colorscale=[[0, "#064e3b"], [0.5, "#10b981"], [1, "#a7f3d0"]],
+                    cmin=0, cmax=_max_deg,
+                    line=dict(width=0.5, color="rgba(255,255,255,0.3)"),
+                    opacity=0.92, symbol="square",
+                ),
+                text=_top_prots if _show_lbl else [""] * _n_p,
+                textfont=dict(size=7, color="#a7f3d0"),
+                hovertext=[f"<b>🔬 {n}</b><br>Liên kết: {_prot_deg.get(n, 0)}"
+                           for n in _top_prots],
+                hoverinfo="text",
+            ))
+
+            _fig3d.update_layout(
+                height=660,
+                paper_bgcolor="#070c1a",
+                margin=dict(l=0, r=0, t=50, b=0),
+                title=dict(
+                    text=(f"🌐 Không gian 3D — {len(_df_g)} liên kết  ·  "
+                          f"{_n_d} thuốc (vòng dưới, z=0)  ·  "
+                          f"{_n_p} protein (vòng trên, z=4.5)"),
+                    font=dict(size=12, color="#475569"), x=0.5,
+                ),
+                scene=dict(
+                    bgcolor="#070c1a",
+                    xaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.04)",
+                               showticklabels=False, title="", zeroline=False,
+                               backgroundcolor="#070c1a"),
+                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.04)",
+                               showticklabels=False, title="", zeroline=False,
+                               backgroundcolor="#070c1a"),
+                    zaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.06)",
+                               showticklabels=False, title="", zeroline=False,
+                               backgroundcolor="#070c1a",
+                               tickvals=[0, 4.5],
+                               ticktext=["💊 Thuốc", "🔬 Protein"]),
+                    camera=dict(eye=dict(x=1.6, y=1.6, z=1.1)),
+                    aspectmode="manual",
+                    aspectratio=dict(x=1.4, y=1.4, z=0.65),
+                ),
+                legend=dict(
+                    font=dict(size=11),
+                    bgcolor="rgba(7,12,26,0.85)",
+                    bordercolor="rgba(99,102,241,0.2)", borderwidth=1,
+                ),
+            )
+            st.plotly_chart(_fig3d, use_container_width=True)
+
+        st.caption(
+            "💡 Kéo slider để thay đổi số nút hiển thị.  "
+            "Hover vào nút để xem tên đầy đủ.  "
+            "Kích thước nút tỷ lệ với số liên kết.  "
+            "Bật 🌐 3D để chuyển sang không gian 3 chiều có thể xoay/zoom."
+        )
 
 # ── Drug-centric view ─────────────────────────────────────────────────
 with tab_drug:

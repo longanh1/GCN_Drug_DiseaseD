@@ -14,6 +14,7 @@ import streamlit as st
 import plotly.graph_objects as go
 from utils.api_client import get_stats, get_global_stats, get_datasets, get_comparison
 from utils.chart_utils import donut_chart
+from utils.auth import render_user_sidebar, render_profile_modal, get_current_user
 
 # ── Global CSS ─────────────────────────────────────────────────────────
 st.markdown('<base href="/">', unsafe_allow_html=True)
@@ -265,8 +266,6 @@ st.markdown("""
 # ── Session state ──────────────────────────────────────────────────────
 if "dataset" not in st.session_state:
     st.session_state.dataset = "C-dataset"
-if "username" not in st.session_state:
-    st.session_state.username = "researcher"
 
 # ── Sidebar ────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -282,6 +281,12 @@ with st.sidebar:
     st.page_link("home.py",               label="🏠  Tổng quan",         help="Trang chủ")
     st.page_link("pages/1_prediction.py", label="🔬  Dự đoán & Phân tích")
     st.page_link("pages/2_history.py",    label="📋  Lịch sử dự đoán")
+    st.page_link("pages/3_model_stages.py", label="🧬  Các giai đoạn mô hình")
+    st.page_link("pages/4_ablation.py",   label="📊  Ablation Study")
+    st.page_link("pages/5_drug_generation.py", label="🧪  Sinh thuốc mới (VGAE)")
+    _cur_user = get_current_user()
+    if _cur_user.get("role") == "admin":
+        st.page_link("pages/6_admin_users.py", label="👥  Quản lý tài khoản")
 
     st.markdown('<div class="sb-nav-label">Cấu hình</div>', unsafe_allow_html=True)
     datasets = get_datasets()
@@ -293,25 +298,7 @@ with st.sidebar:
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    uname = st.session_state.username
-    st.markdown(f"""
-    <div style="padding:10px 16px;display:flex;align-items:center;gap:10px;">
-        <div style="width:36px;height:36px;border-radius:50%;
-                    background:linear-gradient(135deg,#6366f1,#8b5cf6);
-                    display:flex;align-items:center;justify-content:center;
-                    font-weight:700;color:#fff;font-size:0.9rem;
-                    box-shadow:0 3px 10px rgba(99,102,241,0.4);">
-            {uname[0].upper()}
-        </div>
-        <div>
-            <div style="color:#1e293b;font-size:0.85rem;font-weight:600;">{uname}</div>
-            <div style="color:#4b5563;font-size:0.72rem;">Researcher</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("Đăng xuất", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+    render_user_sidebar()
 
 # ── Data ──────────────────────────────────────────────────────────────
 dataset  = st.session_state.dataset
@@ -477,3 +464,6 @@ with c_right:
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("Đến trang Dự đoán →", use_container_width=True, type="primary"):
         st.switch_page("pages/1_prediction.py")
+
+# ── Profile modal ─────────────────────────────────────────────────────
+render_profile_modal()

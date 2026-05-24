@@ -685,9 +685,10 @@ if any_trained:
                     f'F1 {f1:.4f}</span>'
                     f'</div>'
                 )
+            _icon_map = {"Similarity":"📐","GCN":"🕸️","Transformer":"🔄","Cross-Modal":"⚡"}
             comp_icons = ''.join(
                 f'<span title="{k}" style="font-size:1rem;opacity:{"1" if v else "0.2"}">'
-                f'{{"Similarity":"📐","GCN":"🕸️","Transformer":"🔄","Cross-Modal":"⚡"}[k]}</span>'
+                f'{_icon_map.get(k, "❓")}</span>'
                 for k, v in meta.get('components', {}).items()
             )
             st.markdown(
@@ -718,9 +719,10 @@ else:
     for i, variant in enumerate(VARIANT_ORDER):
         meta  = VARIANT_META[variant]
         color = meta['color']
+        _icon_map2 = {"Similarity":"📐","GCN":"🕸️","Transformer":"🔄","Cross-Modal":"⚡"}
         comp_icons = ''.join(
             f'<span title="{k}" style="font-size:1rem;opacity:{"1" if v else "0.2"}">'
-            f'{{"Similarity":"📐","GCN":"🕸️","Transformer":"🔄","Cross-Modal":"⚡"}[k]}</span>'
+            f'{_icon_map2.get(k, "❓")}</span>'
             for k, v in meta['components'].items()
         )
         with card_cols[i % 3]:

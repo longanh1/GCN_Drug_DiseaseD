@@ -6,18 +6,20 @@ _BACKEND = os.getenv("BACKEND_URL", "http://localhost:3000/api")
 _AI      = os.getenv("AI_ENGINE_URL", "http://localhost:8000")
 
 
-def _get(url: str, params: dict = None, timeout: int = 10) -> Optional[Dict]:
+def _get(url: str, params: dict = None, timeout: int = 10, token: str = None) -> Optional[Dict]:
     try:
-        r = requests.get(url, params=params, timeout=timeout)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        r = requests.get(url, params=params, headers=headers, timeout=timeout)
         r.raise_for_status()
         return r.json()
     except Exception as e:
         return {"error": str(e)}
 
 
-def _post(url: str, body: dict = None, timeout: int = 30) -> Optional[Dict]:
+def _post(url: str, body: dict = None, timeout: int = 30, token: str = None) -> Optional[Dict]:
     try:
-        r = requests.post(url, json=body or {}, timeout=timeout)
+        headers = {"Authorization": f"Bearer {token}"} if token else {}
+        r = requests.post(url, json=body or {}, headers=headers, timeout=timeout)
         r.raise_for_status()
         return r.json()
     except Exception as e:

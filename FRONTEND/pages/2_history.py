@@ -14,8 +14,18 @@ import plotly.graph_objects as go
 import plotly.express as px
 import streamlit as st
 from utils.api_client import get_history, clear_history
+from utils.auth import (
+    is_authenticated, can_do, get_current_user,
+    render_user_sidebar, require_permission,
+)
 
 st.markdown('<base href="/">', unsafe_allow_html=True)
+
+# ── Auth + permission gate ────────────────────────────────────────────
+if not is_authenticated():
+    st.warning("Vui lòng đăng nhập trước")
+    st.stop()
+require_permission("view_history")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -166,13 +176,34 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown('<div class="sb-nav-label">Điều hướng</div>', unsafe_allow_html=True)
-    if st.button("🏠  Tổng quan",          use_container_width=True): st.switch_page("home.py")
-    if st.button("🔬  Dự đoán & Phân tích", use_container_width=True): st.switch_page("pages/1_prediction.py")
-    if st.button("📋  Lịch sử",            use_container_width=True): st.switch_page("pages/2_history.py")
+    if st.button("🏠  Tổng quan",           use_container_width=True): st.switch_page("home.py")
+    if st.button("🔬  Dự đoán & Phân tích",  use_container_width=True): st.switch_page("pages/1_prediction.py")
+    if st.button("📋  Lịch sử",             use_container_width=True): st.switch_page("pages/2_history.py")
+    if st.button("🧬  Giai đoạn mô hình gốc",use_container_width=True): st.switch_page("pages/3_model_stages.py")
+    if st.button("📊  Ablation Study",        use_container_width=True): st.switch_page("pages/4_ablation.py")
+    if st.button("🧪  Sinh thuốc mới (VGAE)", use_container_width=True): st.switch_page("pages/5_drug_generation.py")
 
-# ── Data ──────────────────────────────────────────────────────────────
+# ── Data ─────────────────────────────────────────────────────────────
+_current_user = get_current_user()
+_is_admin = _current_user.get("role") == "admin"
 history = get_history(500)
 df = pd.DataFrame(history) if history else pd.DataFrame()
+
+# Admin badge: show scope indicator
+if _is_admin:
+    st.markdown("""
+    <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);
+                border-radius:10px;padding:8px 16px;display:inline-block;margin-bottom:12px;
+                font-size:0.82rem;color:#f59e0b;font-weight:600;">
+        🛡️ Chế độ Admin — Xem lịch sử toàn hệ thống
+    </div>""", unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);
+                border-radius:10px;padding:8px 16px;display:inline-block;margin-bottom:12px;
+                font-size:0.82rem;color:#818cf8;font-weight:600;">
+        👤 Lịch sử cá nhân của bạn
+    </div>""", unsafe_allow_html=True)
 
 # ── Page header ────────────────────────────────────────────────────────
 col_h, col_a = st.columns([3, 1])
