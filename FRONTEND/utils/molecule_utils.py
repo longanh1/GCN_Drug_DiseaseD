@@ -310,6 +310,207 @@ def smiles_to_3d_plotly(smiles: str, title: str = "", dark: bool = True):
         return None
 
 
+def smiles_to_3d_html_viewer(smiles: str, width: int = 620, height: int = 420, dark: bool = True) -> Optional[str]:
+    """Generate an interactive 3D molecule viewer as a self-contained HTML page.
+
+    Strategy (all browser-side, no RDKit Python needed):
+      1. Embed the SMILES in the page.
+      2. Load RDKit.js (WebAssembly) from CDN → generate a 3D molblock in the
+         browser using ETKDG — works for *any* valid SMILES.
+      3. Render the molblock with 3Dmol.js.
+      4. If RDKit.js WASM fails, fall back to PubChem SDF fetched client-side.
+
+    Returns an HTML string for ``st.components.v1.html()``, or None if smiles
+    is empty.
+    """
+    if not smiles:
+        return None
+
+    # Escape the SMILES for safe embedding in a JS string literal
+    smiles_js = (
+        smiles
+        .replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("'", "\\'")
+        .replace("\n", "")
+        .replace("\r", "")
+    )
+
+    bg_css  = "#0a0e24" if dark else "#f8fafc"
+    txt_css = "#e2e8f0" if dark else "#1e293b"
+    btn_bg  = "rgba(99,102,241,0.15)" if dark else "rgba(99,102,241,0.08)"
+    err_bg  = "rgba(244,63,94,0.12)"
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- 3Dmol.js: WebGL molecule renderer -->
+<script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+<!-- RDKit.js: WebAssembly port of RDKit — 3D coordinate generation in-browser -->
+<script src="https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js"></script>
+<style>
+  *   {{ box-sizing:border-box; margin:0; padding:0; }}
+  body {{ background:{bg_css}; font-family:system-ui,sans-serif; color:{txt_css}; }}
+  #wrap {{ display:flex; flex-direction:column; width:{width}px; }}
+  #viewer {{ width:{width}px; height:{height}px; position:relative;
+             border-radius:10px; overflow:hidden; }}
+  #status {{ font-size:11px; color:#94a3b8; text-align:center; padding:3px 0; min-height:18px; }}
+  .btn-row {{ display:flex; flex-wrap:wrap; justify-content:center;
+              gap:4px; padding:5px 4px; background:{bg_css}; }}
+  button {{
+    padding:3px 10px; font-size:11px; cursor:pointer;
+    border:1px solid rgba(99,102,241,0.45); border-radius:6px;
+    background:{btn_bg}; color:#818cf8; transition:background .15s;
+  }}
+  button:hover {{ background:rgba(99,102,241,0.32); }}
+  #errbox {{ display:none; padding:8px 12px; margin:6px 4px;
+             background:{err_bg}; border:1px solid rgba(244,63,94,0.3);
+             border-radius:8px; font-size:12px; color:#fda4af; }}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="viewer"></div>
+  <div id="status">⏳ Đang khởi tạo RDKit.js...</div>
+  <div class="btn-row">
+    <button onclick="setStyle('ballstick')">Ball+Stick</button>
+    <button onclick="setStyle('stick')">Stick</button>
+    <button onclick="setStyle('sphere')">Sphere</button>
+    <button onclick="setStyle('line')">Wire</button>
+    <button onclick="toggleSpin()">⟳ Spin</button>
+    <button onclick="viewer.zoomTo(); viewer.render();">Reset</button>
+  </div>
+  <div id="errbox"></div>
+</div>
+<script>
+(function() {{
+  var SMILES  = "{smiles_js}";
+  var BG      = "{bg_css}";
+  var viewer  = null;
+  var spinning = false;
+  var statusEl = document.getElementById('status');
+  var errEl    = document.getElementById('errbox');
+
+  function showErr(msg) {{
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    statusEl.textContent = '';
+  }}
+
+  function renderMolblock(molblock, source) {{
+    try {{
+      viewer = $3Dmol.createViewer(document.getElementById('viewer'), {{
+        backgroundColor: BG
+      }});
+      viewer.addModel(molblock, 'sdf');
+      applyStyle('ballstick');
+      viewer.zoomTo();
+      viewer.render();
+      statusEl.textContent = '✅ 3D ' + source;
+    }} catch(e) {{
+      showErr('3Dmol render error: ' + e);
+    }}
+  }}
+
+  function applyStyle(s) {{
+    if (!viewer) return;
+    if (s === 'ballstick') {{
+      viewer.setStyle({{}}, {{stick:{{colorscheme:'Jmol',radius:0.12}},
+                              sphere:{{colorscheme:'Jmol',scale:0.22}}}});
+    }} else if (s === 'stick') {{
+      viewer.setStyle({{}}, {{stick:{{colorscheme:'Jmol',radius:0.18}}}});
+    }} else if (s === 'sphere') {{
+      viewer.setStyle({{}}, {{sphere:{{colorscheme:'Jmol'}}}});
+    }} else {{
+      viewer.setStyle({{}}, {{line:{{colorscheme:'Jmol'}}}});
+    }}
+    viewer.render();
+  }}
+
+  window.setStyle = function(s) {{ applyStyle(s); }};
+  window.toggleSpin = function() {{
+    if (!viewer) return;
+    spinning = !spinning;
+    viewer.spin(spinning);
+  }};
+
+  // ── Strategy 1: RDKit.js WASM ────────────────────────────────────
+  function tryRDKitWasm() {{
+    statusEl.textContent = '⏳ RDKit.js: đang tạo tọa độ 3D...';
+    initRDKitModule().then(function(RDKit) {{
+      try {{
+        var mol = RDKit.get_mol(SMILES);
+        if (!mol || !mol.is_valid()) {{
+          mol && mol.delete();
+          throw new Error('SMILES không hợp lệ');
+        }}
+        mol.add_hs_in_place();
+        var ok = mol.set_3d_coords();
+        if (!ok) {{
+          mol.delete();
+          throw new Error('Không thể tạo tọa độ 3D');
+        }}
+        var molblock = mol.get_molblock();
+        mol.delete();
+        renderMolblock(molblock, '(RDKit.js WASM)');
+      }} catch(e) {{
+        statusEl.textContent = '⚠️ RDKit.js thất bại, thử PubChem...';
+        tryPubChem();
+      }}
+    }}).catch(function() {{
+      statusEl.textContent = '⚠️ RDKit.js không tải được, thử PubChem...';
+      tryPubChem();
+    }});
+  }}
+
+  // ── Strategy 2: PubChem API ───────────────────────────────────────
+  function tryPubChem() {{
+    statusEl.textContent = '⏳ Đang tải từ PubChem...';
+    var encoded = encodeURIComponent(SMILES);
+    fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/' +
+          encoded + '/cids/JSON')
+      .then(function(r) {{ return r.json(); }})
+      .then(function(data) {{
+        var cids = (data.IdentifierList || {{}}).CID || [];
+        if (!cids.length) throw new Error('Không tìm thấy trên PubChem');
+        return fetch('https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/' +
+                     cids[0] + '/SDF?record_type=3d');
+      }})
+      .then(function(r) {{
+        if (!r.ok) throw new Error('PubChem SDF 3D không có sẵn');
+        return r.text();
+      }})
+      .then(function(sdf) {{
+        renderMolblock(sdf, '(PubChem 3D)');
+      }})
+      .catch(function(e) {{
+        showErr('⚠️ Không thể tạo cấu trúc 3D: ' + e.message +
+                '. Vui lòng dùng chế độ 2D.');
+      }});
+  }}
+
+  // Start with RDKit.js WASM
+  if (typeof initRDKitModule === 'function') {{
+    tryRDKitWasm();
+  }} else {{
+    // RDKit.js not yet loaded — wait a tick then try
+    setTimeout(function() {{
+      if (typeof initRDKitModule === 'function') {{
+        tryRDKitWasm();
+      }} else {{
+        statusEl.textContent = '⚠️ RDKit.js chưa tải, thử PubChem...';
+        tryPubChem();
+      }}
+    }}, 2000);
+  }}
+}})();
+</script>
+</body>
+</html>"""
+    return html
+
+
 def smiles_to_2d_plotly(smiles: str, title: str = "", dark: bool = True):
     """Generate rich 2D molecule plot using RDKit 2D coordinates via Plotly."""
     if not RDKIT_AVAILABLE or not smiles:

@@ -18,12 +18,8 @@ import { User } from './users/user.entity';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT || '5432'),
-      username: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'pharmalink',
+      type: 'better-sqlite3',
+      database: process.env.DB_PATH || 'pharmalink.sqlite',
       entities: [User],
       synchronize: true, // auto create tables in dev
       logging: false,

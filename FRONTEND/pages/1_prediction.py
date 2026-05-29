@@ -34,7 +34,7 @@ from utils.chart_utils import (
 )
 from utils.molecule_utils import (
     smiles_to_image_b64, get_mol_properties, smiles_to_3d_plotly,
-    smiles_to_2d_plotly, get_lipinski_analysis,
+    smiles_to_2d_plotly, get_lipinski_analysis, smiles_to_3d_html_viewer,
 )
 from utils.auth import (
     is_authenticated, can_do, get_current_user,
@@ -398,12 +398,13 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ── Tabs ────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "🔍  Dự đoán đơn",
     "⊞  Ma trận so sánh",
     "🕸️  Đồ thị mạng lưới",
     "✦  Sinh phân tử mới",
     "📊  So sánh mô hình",
+    "📈  Thống kê Dataset",
 ])
 
 
@@ -495,7 +496,12 @@ with tab1:
                                                 "scrollZoom": True,
                                                 "toImageButtonOptions": {"format":"png","width":900,"height":700}})
                     else:
-                        st.caption("⚠️ Không thể tạo cấu trúc 3D (cần RDKit AllChem)")
+                        _html_3d = smiles_to_3d_html_viewer(smiles_str, width=620, height=420, dark=True)
+                        if _html_3d:
+                            import streamlit.components.v1 as _components
+                            _components.html(_html_3d, width=640, height=500, scrolling=False)
+                        else:
+                            st.caption("⚠️ Không thể tạo cấu trúc 3D (SMILES không hợp lệ)")
 
                 # ── Molecular properties ──────────────────────────────
                 props = get_mol_properties(smiles_str)
@@ -2266,4 +2272,226 @@ with tab5:
                 st.download_button("⬇️ Tải CSV", df_abl.to_csv(),
                                    f"{dataset}_ablation_comparison.csv", "text/csv",
                                    key="dl_abl_csv")
+
+# ═══════════════════════════════════════════════════════════════════════════
+# TAB 6 – Thống kê Dataset
+# ═══════════════════════════════════════════════════════════════════════════
+with tab6:
+    st.markdown("""
+    <h2 style='margin-bottom:4px'>📈 Tổng quan Benchmark Datasets</h2>
+    <p style='color:#94A3B8;margin-bottom:24px'>
+        Thống kê chi tiết 3 bộ dữ liệu chuẩn dùng để huấn luyện và đánh giá mô hình AMNTDDA
+    </p>
+    """, unsafe_allow_html=True)
+
+    # ── Dữ liệu thống kê ──────────────────────────────────────────────
+    _DS_STATS = {
+        "B-dataset": {
+            "drugs": 269, "diseases": 598, "proteins": 1021,
+            "drug_disease": 18416, "drug_protein": 3110, "disease_protein": 5898,
+            "sparsity": 0.1144,
+            "color": "#6366f1", "bg": "rgba(99,102,241,0.08)", "border": "rgba(99,102,241,0.35)",
+            "desc": "Bộ dữ liệu B có mật độ liên kết cao nhất (~11.4%), phù hợp để đánh giá hiệu suất tổng quát.",
+        },
+        "C-dataset": {
+            "drugs": 663, "diseases": 409, "proteins": 993,
+            "drug_disease": 2532, "drug_protein": 3773, "disease_protein": 10734,
+            "sparsity": 0.0093,
+            "color": "#10b981", "bg": "rgba(16,185,129,0.08)", "border": "rgba(16,185,129,0.35)",
+            "desc": "Bộ dữ liệu C có nhiều thuốc nhất (663) nhưng mật độ liên kết thấp (~0.9%), thử thách hơn.",
+        },
+        "F-dataset": {
+            "drugs": 593, "diseases": 313, "proteins": 2741,
+            "drug_disease": 1933, "drug_protein": 3243, "disease_protein": 54265,
+            "sparsity": 0.0104,
+            "color": "#f59e0b", "bg": "rgba(245,158,11,0.08)", "border": "rgba(245,158,11,0.35)",
+            "desc": "Bộ dữ liệu F có nhiều protein nhất (2741) và nhiều liên kết bệnh–protein nhất (54,265).",
+        },
+    }
+
+    # ── Cards tổng quan 3 dataset ──────────────────────────────────────
+    _c1, _c2, _c3 = st.columns(3)
+    for _col, (_dsname, _dss) in zip([_c1, _c2, _c3], _DS_STATS.items()):
+        with _col:
+            st.markdown(f"""
+            <div style="background:{_dss['bg']};border:1.5px solid {_dss['border']};
+                        border-radius:14px;padding:20px 18px;margin-bottom:8px;">
+                <div style="font-size:1.15rem;font-weight:700;color:{_dss['color']};
+                            margin-bottom:12px;border-bottom:1px solid {_dss['border']};
+                            padding-bottom:8px;">{_dsname}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                    <div style="text-align:center;background:rgba(255,255,255,0.05);
+                                border-radius:8px;padding:8px 4px;">
+                        <div style="font-size:1.5rem;font-weight:800;color:{_dss['color']};">{_dss['drugs']:,}</div>
+                        <div style="font-size:0.72rem;color:#94a3b8;">💊 Thuốc</div>
+                    </div>
+                    <div style="text-align:center;background:rgba(255,255,255,0.05);
+                                border-radius:8px;padding:8px 4px;">
+                        <div style="font-size:1.5rem;font-weight:800;color:{_dss['color']};">{_dss['diseases']:,}</div>
+                        <div style="font-size:0.72rem;color:#94a3b8;">🦠 Bệnh</div>
+                    </div>
+                    <div style="text-align:center;background:rgba(255,255,255,0.05);
+                                border-radius:8px;padding:8px 4px;">
+                        <div style="font-size:1.5rem;font-weight:800;color:{_dss['color']};">{_dss['proteins']:,}</div>
+                        <div style="font-size:0.72rem;color:#94a3b8;">🔬 Protein</div>
+                    </div>
+                    <div style="text-align:center;background:rgba(255,255,255,0.05);
+                                border-radius:8px;padding:8px 4px;">
+                        <div style="font-size:1.25rem;font-weight:800;color:{_dss['color']};">{_dss['sparsity']:.4f}</div>
+                        <div style="font-size:0.72rem;color:#94a3b8;">⚡ Sparsity</div>
+                    </div>
+                </div>
+                <div style="font-size:0.78rem;color:#64748b;line-height:1.5;">{_dss['desc']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── Bảng tổng hợp đầy đủ ─────────────────────────────────────────
+    st.markdown("### 📋 Bảng tổng hợp chi tiết")
+    import pandas as _pd_ds
+    _df_stats = _pd_ds.DataFrame([
+        {
+            "Dataset": ds,
+            "💊 Thuốc": s["drugs"],
+            "🦠 Bệnh": s["diseases"],
+            "🔬 Protein": s["proteins"],
+            "💊↔🦠 Drug–Disease": s["drug_disease"],
+            "💊↔🔬 Drug–Protein": s["drug_protein"],
+            "🦠↔🔬 Disease–Protein": s["disease_protein"],
+            "⚡ Sparsity": s["sparsity"],
+        }
+        for ds, s in _DS_STATS.items()
+    ]).set_index("Dataset")
+
+    st.dataframe(
+        _df_stats.style.format({
+            "💊 Thuốc": "{:,}",
+            "🦠 Bệnh": "{:,}",
+            "🔬 Protein": "{:,}",
+            "💊↔🦠 Drug–Disease": "{:,}",
+            "💊↔🔬 Drug–Protein": "{:,}",
+            "🦠↔🔬 Disease–Protein": "{:,}",
+            "⚡ Sparsity": "{:.4f}",
+        }).background_gradient(cmap="Blues", subset=["💊↔🦠 Drug–Disease", "💊↔🔬 Drug–Protein", "🦠↔🔬 Disease–Protein"])
+        .background_gradient(cmap="Oranges", subset=["⚡ Sparsity"]),
+        use_container_width=True,
+        height=175,
+    )
+
+    st.divider()
+
+    # ── Biểu đồ so sánh ────────────────────────────────────────────────
+    _g1, _g2 = st.columns(2)
+
+    with _g1:
+        st.markdown("#### 🧬 Phân bố thực thể (Thuốc / Bệnh / Protein)")
+        _ds_names = list(_DS_STATS.keys())
+        _fig_ent = go.Figure()
+        _categories = [("💊 Thuốc", "drugs", "#6366f1"), ("🦠 Bệnh", "diseases", "#10b981"), ("🔬 Protein", "proteins", "#f59e0b")]
+        for _cat_label, _cat_key, _cat_color in _categories:
+            _fig_ent.add_trace(go.Bar(
+                name=_cat_label,
+                x=_ds_names,
+                y=[_DS_STATS[d][_cat_key] for d in _ds_names],
+                marker_color=_cat_color,
+                text=[f"{_DS_STATS[d][_cat_key]:,}" for d in _ds_names],
+                textposition="outside",
+                textfont=dict(size=11),
+            ))
+        _fig_ent.update_layout(
+            barmode="group", height=380,
+            plot_bgcolor="#0F172A", paper_bgcolor="#0F172A",
+            font=dict(color="#e2e8f0"),
+            margin=dict(l=10, r=10, t=30, b=10),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5,
+                        bgcolor="rgba(15,23,42,0.8)"),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zeroline=False),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.06)"),
+        )
+        st.plotly_chart(_fig_ent, use_container_width=True)
+
+    with _g2:
+        st.markdown("#### 🔗 Số liên kết theo loại quan hệ")
+        _fig_assoc = go.Figure()
+        _assoc_cats = [
+            ("💊↔🦠 Drug–Disease", "drug_disease", "#818cf8"),
+            ("💊↔🔬 Drug–Protein", "drug_protein", "#34d399"),
+            ("🦠↔🔬 Disease–Protein", "disease_protein", "#fbbf24"),
+        ]
+        for _al, _ak, _ac in _assoc_cats:
+            _fig_assoc.add_trace(go.Bar(
+                name=_al,
+                x=_ds_names,
+                y=[_DS_STATS[d][_ak] for d in _ds_names],
+                marker_color=_ac,
+                text=[f"{_DS_STATS[d][_ak]:,}" for d in _ds_names],
+                textposition="outside",
+                textfont=dict(size=10),
+            ))
+        _fig_assoc.update_layout(
+            barmode="group", height=380,
+            plot_bgcolor="#0F172A", paper_bgcolor="#0F172A",
+            font=dict(color="#e2e8f0"),
+            margin=dict(l=10, r=10, t=30, b=10),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5,
+                        bgcolor="rgba(15,23,42,0.8)"),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zeroline=False, title="Số liên kết"),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.06)"),
+        )
+        st.plotly_chart(_fig_assoc, use_container_width=True)
+
+    # ── Sparsity radar ──────────────────────────────────────────────────
+    _g3, _g4 = st.columns(2)
+    with _g3:
+        st.markdown("#### ⚡ Mật độ liên kết (Sparsity)")
+        _fig_sp = go.Figure(go.Bar(
+            x=_ds_names,
+            y=[_DS_STATS[d]["sparsity"] for d in _ds_names],
+            marker_color=["#6366f1", "#10b981", "#f59e0b"],
+            text=[f"{_DS_STATS[d]['sparsity']:.4f}" for d in _ds_names],
+            textposition="outside",
+            textfont=dict(size=13, color="white"),
+            width=0.45,
+        ))
+        _fig_sp.update_layout(
+            height=300,
+            plot_bgcolor="#0F172A", paper_bgcolor="#0F172A",
+            font=dict(color="#e2e8f0"),
+            margin=dict(l=10, r=10, t=20, b=10),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zeroline=False, title="Sparsity"),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.06)"),
+        )
+        st.plotly_chart(_fig_sp, use_container_width=True)
+
+    with _g4:
+        st.markdown("#### 🥧 Tỷ lệ loại liên kết (theo dataset đang chọn)")
+        _pie_ds = st.selectbox("Chọn dataset:", list(_DS_STATS.keys()), key="pie_ds_select")
+        _pie_s  = _DS_STATS[_pie_ds]
+        _fig_pie = go.Figure(go.Pie(
+            labels=["💊↔🦠 Drug–Disease", "💊↔🔬 Drug–Protein", "🦠↔🔬 Disease–Protein"],
+            values=[_pie_s["drug_disease"], _pie_s["drug_protein"], _pie_s["disease_protein"]],
+            marker_colors=["#818cf8", "#34d399", "#fbbf24"],
+            hole=0.45,
+            textinfo="label+percent",
+            textfont=dict(size=11),
+            hovertemplate="<b>%{label}</b><br>%{value:,} liên kết<br>%{percent}<extra></extra>",
+        ))
+        _fig_pie.update_layout(
+            height=300,
+            plot_bgcolor="#0F172A", paper_bgcolor="#0F172A",
+            font=dict(color="#e2e8f0"),
+            margin=dict(l=10, r=10, t=20, b=10),
+            legend=dict(orientation="v", font=dict(size=10),
+                        bgcolor="rgba(15,23,42,0.8)"),
+            showlegend=False,
+        )
+        st.plotly_chart(_fig_pie, use_container_width=True)
+
+    # ── Ghi chú nguồn ──────────────────────────────────────────────────
+    st.info(
+        "📚 **Nguồn dữ liệu:** B-dataset (Bresso et al.), C-dataset (Cheng et al.), "
+        "F-dataset (Fdataset). Sparsity = Số liên kết Drug–Disease / (Số Thuốc × Số Bệnh).",
+        icon="ℹ️",
+    )
 

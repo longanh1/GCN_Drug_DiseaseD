@@ -240,15 +240,19 @@ def _render_login():
             return
         with st.spinner("Đang xác thực..."):
             res = _post("login", {"identifier": identifier, "password": password})
-        if "error" in res:
-            st.error(f"Lỗi kết nối: {res['error']}")
-        elif "message" in res and "access_token" not in res:
-            st.error(res.get("message", "Đăng nhập thất bại"))
-        elif "access_token" in res:
+        if "access_token" in res:
             st.session_state["auth_token"]   = res["access_token"]
             st.session_state["auth_user"]    = res["user"]
             st.session_state["is_logged_in"] = True
             st.switch_page("home.py")
+        elif "statusCode" in res:
+            # HTTP error from backend (e.g. 401 wrong password)
+            msg = res.get("message", "Đăng nhập thất bại")
+            if isinstance(msg, list):
+                msg = "; ".join(msg)
+            st.error(f"❌ {msg}")
+        elif "error" in res:
+            st.error(f"Lỗi kết nối tới server: {res['error']}")
         else:
             st.error("Đăng nhập thất bại. Kiểm tra lại thông tin.")
 
@@ -280,18 +284,19 @@ def _render_register():
                 body["fullName"] = full_name
             res = _post("register", body)
 
-        if "error" in res:
-            st.error(f"Lỗi kết nối: {res['error']}")
-        elif "access_token" in res:
+        if "access_token" in res:
             st.session_state["auth_token"]   = res["access_token"]
             st.session_state["auth_user"]    = res["user"]
             st.session_state["is_logged_in"] = True
             st.switch_page("home.py")
-        else:
-            msg = res.get("message", "")
+        elif "statusCode" in res:
+            # HTTP error from backend (e.g. 409 duplicate email)
+            msg = res.get("message", "Đăng ký thất bại")
             if isinstance(msg, list):
                 msg = "; ".join(msg)
-            st.error(f"Đăng ký thất bại: {msg}")
+            st.error(f"❌ {msg}")
+        elif "error" in res:
+            st.error(f"Lỗi kết nối tới server: {res['error']}")
 
     st.markdown('<div class="auth-footer">Đã có tài khoản? Chọn tab <b>Đăng nhập</b></div>',
                 unsafe_allow_html=True)
